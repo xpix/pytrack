@@ -5,10 +5,10 @@ import threading
 import psutil
 import serial
 import pynmea2
-from os import	system
+from os import system
 from time import sleep
 
-class	GPSPosition(object):
+class GPSPosition(object):
 	def __init__(self, when_new_position=None, when_lock_changed=None):
 		self.GPSPosition = None
 		
@@ -36,10 +36,10 @@ class	GPSPosition(object):
 	def fix(self):
 		return self.GPSPosition['fix']
 		
-class	GPS(object):
+class GPS(object):
 	"""
-	Gets position from UBlox GPS receiver,	using	external	program for	s/w i2c to GPIO pins
-	Provides	callbacks on change of state (e.g. lock attained, lock lost, new position received)
+	Gets position from UBlox GPS receiver,	using external program for s/w i2c to GPIO pins
+	Provides callbacks on change of state (e.g. lock attained, lock lost, new position received)
 	"""
 	PortOpen	= False
 	
@@ -50,27 +50,27 @@ class	GPS(object):
 		self._GPSPosition	= {'time': '00:00:00', 'lat':	0.0, 'lon':	0.0, 'alt':	0,	'sats': 0, 'fix':	0}
 		self._GPSPositionObject	= GPSPosition()
 		
-		# Start thread	to	talk to GPS	program
+		# Start thread to talk to GPS program
 		t = threading.Thread(target=self.__gps_thread)
 		t.daemon	= True
 		t.start()
 		
 	def __process_gps(self,	s):
-		while	1:
-			reply	= s.recv(4096)													
-			if	reply:
+		while 1:
+			reply	= s.recv(4096)
+			if reply:
 				inputstring	= reply.split(b'\n')
-				for line	in	inputstring:
-					if	line:
+				for line in inputstring:
+					if line:
 						temp = line.decode('utf-8')
 						j = json.loads(temp)
 						self._GPSPosition	= j
-						if	self._WhenNewPosition:
+						if self._WhenNewPosition:
 							self._WhenNewPosition(self._GPSPosition)
 						GotLock = self._GPSPosition['fix'] >= 1
-						if	GotLock != self._GotLock:
+						if GotLock != self._GotLock:
 							self._GotLock = GotLock
-							if	self._WhenLockChanged:
+							if self._WhenLockChanged:
 								self._WhenLockChanged(GotLock)
 			else:
 				sleep(1)
@@ -79,7 +79,7 @@ class	GPS(object):
 
 	def __process_gps_serial(self, s):
 		c=0
-		while	1:
+		while 1:
 			data = "".join( chr(x) for x in s.readline())
 			if (data.startswith('$GPGGA')):
 				try:
@@ -119,7 +119,7 @@ class	GPS(object):
 
 	
 	def _ServerRunning(self):
-		return "gps" in [psutil.Process(i).name()	for i	in	psutil.pids()]
+		return "gps" in [psutil.Process(i).name()	for i in psutil.pids()]
 		
 	def _StartServer(self):
 		system("pytrack-gps > /dev/null &")
@@ -127,18 +127,18 @@ class	GPS(object):
 		
 	def __doGPS(self,	host,	port):
 		try:		
-			# Connect socket to GPS	server
+			# Connect socket to GPS server
 			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)	
 			s.connect((host, port))													
 			self.__process_gps(s)
 			s.close()
 		except:
-			# Start GPS	server if it's	not running
-			if	not self._ServerRunning():
+			# Start GPS server if it's not running
+			if not self._ServerRunning():
 				self._StartServer()
 
 	def __doGPSSerial(self,	device):
-		# Connect socket to GPS	server
+		# Connect socket to GPS server
 		s = serial.Serial()
 		s.port =	device
 		s.baudrate = 9600
@@ -153,14 +153,14 @@ class	GPS(object):
 		port = 6005
 		device =	'/dev/serial0'
 				
-		while	1:
+		while 1:
 			#self.__doGPS(host, port)
 			self.__doGPSSerial(device)
 
 					
 	def position(self):
-		"""returns the	current GPS	position	as	a dictionary, containing the latest	GPS data	('time',	'lat', 'lon', alt', 'sats', 'fix').
-		These	values can be access	individually using the properties below (see	the descriptions for	return types etc.).
+		"""returns the current GPS position as a dictionary, containing the latest GPS data	('time',	'lat', 'lon', alt', 'sats', 'fix').
+		These values can be access individually using the properties below (see the descriptions for return types etc.).
 		"""
 		self._GPSPositionObject.GPSPosition	= self._GPSPosition
 		return self._GPSPositionObject
@@ -168,31 +168,31 @@ class	GPS(object):
 		
 	@property
 	def time(self):
-		"""Returns latest	GPS time	(UTC)"""
+		"""Returns latest GPS time	(UTC)"""
 		return self._GPSPosition['time']
 			
 	@property
 	def lat(self):
-		"""Returns latest	GPS latitude"""
+		"""Returns latest GPS latitude"""
 		return self._GPSPosition['lat']
 			
 	@property
 	def lon(self):
-		"""Returns latest	GPS longitude"""
+		"""Returns latest GPS longitude"""
 		return self._GPSPosition['lon']
 			
 	@property
 	def alt(self):
-		"""Returns latest	GPS altitude"""
+		"""Returns latest GPS altitude"""
 		return self._GPSPosition['alt']
 			
 	@property
 	def sats(self):
-		"""Returns latest	GPS satellite count.	 Needs at least 4	satellites for	a 3D position"""
+		"""Returns latest GPS satellite count.	 Needs at least 4 satellites for a 3D position"""
 		return self._GPSPosition['sats']
 			
 	@property
 	def fix(self):
-		"""Returns a number >=1	for a	fix, or 0 for no fix"""
+		"""Returns a number >=1 for a fix, or 0 for no fix"""
 		return self._GPSPosition['fix']
 			
